@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pointers in C/C++ — Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d14;
+    --surface: #16161f;
+    --surface2: #1e1e2e;
+    --border: #2a2a3d;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7d;
+    --accent3: #5cf0b8;
+    --accent4: #ffc85c;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --correct: #5cf0b8;
+    --wrong: #fc5c7d;
+    --radius: 14px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,92,252,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,92,252,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 780px;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+
+  #start-screen {
+    text-align: center;
+    animation: fadeUp .5s ease;
+  }
+
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(124,92,252,0.15);
+    border: 1px solid rgba(124,92,252,0.3);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--accent);
+    letter-spacing: .05em;
+    margin-bottom: 28px;
+  }
+
+  h1.title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+    margin-bottom: 40px;
+    line-height: 1.7;
+  }
+
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 24px;
+    text-align: center;
+    min-width: 110px;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-top: 2px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #9b7bff);
+    color: #fff;
+    border: none;
+    padding: 16px 48px;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: .03em;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 30px rgba(124,92,252,0.4);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 40px rgba(124,92,252,0.55);
+  }
+
+  #quiz-screen { animation: fadeUp .35s ease; }
+
+  .quiz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .q-counter {
+    font-family: 'DM Mono', monospace;
+    font-size: .85rem;
+    color: var(--muted);
+  }
+
+  .q-counter span {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .timer-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: 999px;
+  }
+
+  .timer-icon {
+    font-size: 1rem;
+  }
+
+  #timer-display {
+    font-family: 'DM Mono', monospace;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--accent4);
+    min-width: 40px;
+    text-align: right;
+  }
+
+  #timer-display.danger { color: var(--wrong); animation: pulse 1s infinite; }
+
+  .score-pill {
+    background: rgba(92,240,184,0.12);
+    border: 1px solid rgba(92,240,184,0.25);
+    color: var(--correct);
+    font-size: .8rem;
+    font-family: 'DM Mono', monospace;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+
+  .progress-bar-wrap {
+    background: var(--surface2);
+    border-radius: 999px;
+    height: 6px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #9b7bff);
+    border-radius: 999px;
+    transition: width .5s ease;
+  }
+
+  .category-tag {
+    display: inline-block;
+    background: rgba(124,92,252,0.12);
+    border: 1px solid rgba(124,92,252,0.25);
+    color: var(--accent);
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: .06em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+
+  .question-text {
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  code {
+    font-family: 'DM Mono', monospace;
+    background: rgba(124,92,252,0.15);
+    color: #c4b5fd;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: .9em;
+  }
+
+  .choices-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 540px) {
+    .choices-grid { grid-template-columns: 1fr; }
+    .question-card { padding: 20px; }
+  }
+
+  .choice-btn {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: border-color .15s, background .15s, transform .1s;
+    color: var(--text);
+    font-size: .95rem;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.5;
+  }
+
+  .choice-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(124,92,252,0.08);
+    transform: translateY(-1px);
+  }
+
+  .choice-btn:disabled { cursor: default; }
+
+  .choice-letter {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--muted);
+    transition: background .15s, color .15s;
+  }
+
+  .choice-btn.correct {
+    border-color: var(--correct);
+    background: rgba(92,240,184,0.1);
+  }
+
+  .choice-btn.correct .choice-letter {
+    background: var(--correct);
+    color: #0d0d14;
+  }
+
+  .choice-btn.wrong {
+    border-color: var(--wrong);
+    background: rgba(252,92,125,0.1);
+  }
+
+  .choice-btn.wrong .choice-letter {
+    background: var(--wrong);
+    color: #fff;
+  }
+
+  .feedback-box {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--accent);
+    font-size: .93rem;
+    line-height: 1.6;
+    color: #c4c4d4;
+    display: none;
+  }
+
+  .feedback-box.visible { display: block; animation: fadeUp .3s ease; }
+  .feedback-box.correct-fb { border-color: var(--correct); }
+  .feedback-box.wrong-fb { border-color: var(--wrong); }
+
+  .feedback-icon {
+    font-size: 1.1rem;
+    margin-right: 6px;
+  }
+
+  .next-btn {
+    width: 100%;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    padding: 14px;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: background .15s, color .15s;
+    display: none;
+  }
+
+  .next-btn:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .next-btn.visible { display: block; animation: fadeUp .2s ease; }
+
+  #results-screen {
+    text-align: center;
+    animation: fadeUp .5s ease;
+  }
+
+  .results-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px 32px;
+    margin-bottom: 24px;
+  }
+
+  .trophy {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 20px rgba(255,200,92,0.5));
+  }
+
+  .final-score {
+    font-family: 'Syne', sans-serif;
+    font-size: 5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent4), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .final-label {
+    color: var(--muted);
+    font-size: .9rem;
+    margin-bottom: 28px;
+  }
+
+  .result-grade {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .result-message {
+    color: var(--muted);
+    font-size: .95rem;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  .breakdown {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .breakdown-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 10px;
+  }
+
+  .breakdown-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  .breakdown-num.correct { color: var(--correct); }
+  .breakdown-num.wrong { color: var(--wrong); }
+  .breakdown-num.skipped { color: var(--accent4); }
+
+  .breakdown-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+  }
+
+  .results-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-secondary {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    color: var(--text);
+    padding: 14px 32px;
+    border-radius: 999px;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color .15s;
+  }
+
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .4; }
+  }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.07); }
+    100% { transform: scale(1); }
+  }
+
+  .pop { animation: pop .3s ease; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <div id="start-screen" class="screen active">
+    <div class="logo-badge"> C Fundamentals</div>
+    <h1 class="title">Pointers in C<br>Quiz Challenge</h1>
+    <p class="subtitle">Test your knowledge on pointers, memory, arrays,<br>functions, and dynamic memory allocation.</p>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num">30</div>
+        <div class="stat-label">Questions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">20s</div>
+        <div class="stat-label">Per Question</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">4</div>
+        <div class="stat-label">Choices</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="startQuiz()">Start Quiz →</button>
+  </div>
+
+
+  <div id="quiz-screen" class="screen">
+    <div class="quiz-header">
+      <div class="q-counter">Question <span id="q-num">1</span> of <span id="q-total">30</span></div>
+      <div class="timer-wrap">
+        <span class="timer-icon">⏱</span>
+        <div id="timer-display">20</div>
+      </div>
+      <div class="score-pill">Score: <span id="score-display">0</span></div>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+
+    <div class="category-tag" id="q-category">Basics</div>
+
+    <div class="question-card">
+      <div class="question-text" id="question-text">Loading…</div>
+    </div>
+
+    <div class="choices-grid" id="choices-grid"></div>
+
+    <div class="feedback-box" id="feedback-box"></div>
+
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question →</button>
+  </div>
+
+
+  <div id="results-screen" class="screen">
+    <div class="results-card">
+      <div class="trophy" id="trophy-icon">🏆</div>
+      <div class="final-score" id="final-score">0/30</div>
+      <div class="final-label">questions correct</div>
+      <div class="result-grade" id="result-grade">Keep Practicing!</div>
+      <div class="result-message" id="result-message"></div>
+      <div class="breakdown">
+        <div class="breakdown-item">
+          <div class="breakdown-num correct" id="res-correct">0</div>
+          <div class="breakdown-label">Correct</div>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-num wrong" id="res-wrong">0</div>
+          <div class="breakdown-label">Wrong</div>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-num skipped" id="res-skipped">0</div>
+          <div class="breakdown-label">Timed Out</div>
+        </div>
+      </div>
+    </div>
+    <div class="results-actions">
+      <button class="btn-secondary" onclick="restartQuiz()">↺ Play Again</button>
+      <button class="btn-primary" onclick="restartQuiz()">New Round →</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    category: "Basics",
+    question: "What is a pointer in C/C++?",
+    choices: [
+      "A variable that stores the value of another variable",
+      "A variable that stores the address of another variable",
+      "A function that points to a memory block",
+      "A keyword used to allocate memory"
+    ],
+    answer: 1,
+    explanation: "A pointer is a variable that stores the memory address (not the value) of another variable."
+  },
+  {
+    category: "Basics",
+    question: "In a typical modern compiler, how many bytes of memory are allocated for an <code>int</code> variable?",
+    choices: ["1 byte", "2 bytes", "4 bytes", "8 bytes"],
+    answer: 2,
+    explanation: "In a typical modern day compiler, an integer is allocated 4 bytes of memory."
+  },
+  {
+    category: "Basics",
+    question: "How many bytes of memory are allocated for a <code>char</code> variable?",
+    choices: ["4 bytes", "2 bytes", "8 bytes", "1 byte"],
+    answer: 3,
+    explanation: "A character variable is allocated exactly 1 byte of memory."
+  },
+  {
+    category: "Syntax",
+    question: "Which of the following correctly declares a pointer to an integer named <code>p</code>?",
+    choices: ["int p;", "int *p;", "pointer int p;", "&int p;"],
+    answer: 1,
+    explanation: "A pointer variable is declared by putting an asterisk (*) before the variable name: <code>int *p;</code>"
+  },
+  {
+    category: "Syntax",
+    question: "What does the <code>&</code> (ampersand) operator do when placed in front of a variable?",
+    choices: [
+      "Dereferences the pointer",
+      "Returns the value at the variable's address",
+      "Returns the address of the variable",
+      "Allocates memory for the variable"
+    ],
+    answer: 2,
+    explanation: "The <code>&</code> operator gives the address (returns a pointer) of a variable. For example, <code>&a</code> gives the address of <code>a</code>."
+  },
+  {
+    category: "Dereferencing",
+    question: "If <code>p</code> stores the address of an integer variable <code>a</code> which holds value 5, what does <code>*p</code> return?",
+    choices: ["The address of p", "The address of a", "5", "The address 204"],
+    answer: 2,
+    explanation: "Placing <code>*</code> in front of a pointer dereferences it — giving us the value at the address it points to. So <code>*p</code> returns 5."
+  },
+  {
+    category: "Dereferencing",
+    question: "What is the concept called when you use <code>*p</code> to access the value at the address stored in pointer <code>p</code>?",
+    choices: ["Pointer casting", "Dereferencing", "Address binding", "Memory mapping"],
+    answer: 1,
+    explanation: "Dereferencing means using the <code>*</code> operator on a pointer to access the value at the address it holds."
+  },
+  {
+    category: "Pointer Arithmetic",
+    question: "If <code>p</code> is an integer pointer at address 2002, what is the value of <code>p + 1</code>?",
+    choices: ["2003", "2004", "2006", "2008"],
+    answer: 2,
+    explanation: "Incrementing an integer pointer by 1 moves it to the next integer address, which is 4 bytes ahead. So <code>p + 1</code> = 2002 + 4 = 2006."
+  },
+  {
+    category: "Pointer Arithmetic",
+    question: "Why does incrementing an integer pointer by 1 add 4 to the address (not 1)?",
+    choices: [
+      "Because pointers are 4 bytes in size",
+      "Because integers are stored in 4 bytes, so the next integer is 4 bytes ahead",
+      "Because the compiler adds padding of 3 bytes",
+      "Because address arithmetic is always multiplied by 4"
+    ],
+    answer: 1,
+    explanation: "Pointer arithmetic increments by the size of the type. Since an int is 4 bytes, <code>p + 1</code> moves 4 bytes forward to point to the next integer."
+  },
+  {
+    category: "Memory",
+    question: "When we declare a variable in a C program, where is the information about the variable's name, type, and address stored during execution?",
+    choices: [
+      "In the heap section",
+      "In a lookup table maintained internally by the computer/compiler",
+      "In the code segment",
+      "In a global register"
+    ],
+    answer: 1,
+    explanation: "The computer has an internal lookup table where it stores the variable's name, type, and address so it can find it during execution."
+  },
+  {
+    category: "Arrays & Pointers",
+    question: "When you use the name of an array (e.g., <code>a</code>) in C, what does it return?",
+    choices: [
+      "The size of the array",
+      "The value of the first element",
+      "A pointer to the first element of the array",
+      "A copy of the entire array"
+    ],
+    answer: 2,
+    explanation: "The name of an array returns a pointer to the first element of the array."
+  },
+  {
+    category: "Arrays & Pointers",
+    question: "For an integer array <code>a</code>, which of the following is equivalent to <code>a[i]</code>?",
+    choices: ["*(a + i)", "&a[i]", "a + i", "*(a) + i"],
+    answer: 0,
+    explanation: "<code>a[i]</code> and <code>*(a + i)</code> are alternate syntax — both access the value at index i of the array."
+  },
+  {
+    category: "Arrays & Pointers",
+    question: "If integer array <code>a</code> starts at address 200, and each int is 4 bytes, what address does <code>a + 2</code> point to?",
+    choices: ["202", "204", "208", "210"],
+    answer: 2,
+    explanation: "<code>a + 2</code> skips 2 integers × 4 bytes = 8 bytes ahead. So 200 + 8 = 208."
+  },
+  {
+    category: "2D Arrays",
+    question: "For a 2D integer array <code>b[2][3]</code>, what type of pointer does the array name <code>b</code> return?",
+    choices: [
+      "Pointer to int",
+      "Pointer to 1D array of 3 integers",
+      "Pointer to 2D array",
+      "Pointer to the last element"
+    ],
+    answer: 1,
+    explanation: "Since <code>b</code> is an array of 1D arrays of 3 integers, the name <code>b</code> returns a pointer to a 1D array of 3 integers."
+  },
+  {
+    category: "2D Arrays",
+    question: "For 2D array <code>b</code> starting at address 400, each int being 4 bytes, what is the value of <code>b + 1</code>?",
+    choices: ["401", "404", "408", "412"],
+    answer: 3,
+    explanation: "Each row is a 1D array of 3 ints = 12 bytes. So <code>b + 1</code> = 400 + 12 = 412."
+  },
+  {
+    category: "2D Arrays",
+    question: "Which expression is equivalent to <code>b[i][j]</code> for a 2D array <code>b</code>?",
+    choices: ["*(b[i] + j)", "*(*(b + i) + j)", "Both A and B", "*(b + i + j)"],
+    answer: 2,
+    explanation: "Both <code>*(b[i] + j)</code> and <code>*(*(b + i) + j)</code> are valid alternate syntax for <code>b[i][j]</code>."
+  },
+  {
+    category: "Functions & Pointers",
+    question: "What is the difference between 'call by value' and 'call by reference' in C?",
+    choices: [
+      "Call by value passes the actual variable; call by reference passes a copy",
+      "Call by value passes a copy of the value; call by reference passes the address",
+      "They are identical in C",
+      "Call by reference only works with global variables"
+    ],
+    answer: 1,
+    explanation: "Call by value sends a copy of the data. Call by reference sends the memory address, allowing the function to modify the original variable."
+  },
+  {
+    category: "Functions & Pointers",
+    question: "Why is it dangerous to return a pointer to a local variable from a function?",
+    choices: [
+      "Local variables are stored in read-only memory",
+      "The local variable's memory on the stack is deallocated when the function returns",
+      "Pointers cannot be returned from functions",
+      "The compiler always gives an error for this"
+    ],
+    answer: 1,
+    explanation: "When a function returns, its stack frame is deallocated. Returning a pointer to a local variable means pointing to freed memory — leading to garbage values."
+  },
+  {
+    category: "Functions & Pointers",
+    question: "Which type of memory is safe to return a pointer to from a function?",
+    choices: [
+      "Stack memory",
+      "A local variable",
+      "Heap memory or global memory",
+      "Register memory"
+    ],
+    answer: 2,
+    explanation: "Heap memory must be explicitly freed (so it persists), and global memory lives for the program's lifetime. Both are safe to return pointers to."
+  },
+  {
+    category: "Function Pointers",
+    question: "What do function pointers store?",
+    choices: [
+      "The return value of a function",
+      "The starting address (entry point) of a function in memory",
+      "The parameters of a function",
+      "The size of a function in bytes"
+    ],
+    answer: 1,
+    explanation: "Function pointers store the starting address (entry point) of a function — the address of the first instruction in the function's code."
+  },
+  {
+    category: "Function Pointers",
+    question: "In which memory segment of an application are the program's instructions (machine code) stored?",
+    choices: [
+      "Stack",
+      "Heap",
+      "Code / Text segment",
+      "Global / Static segment"
+    ],
+    answer: 2,
+    explanation: "The code (or text) segment holds the machine code instructions copied from the executable file."
+  },
+  {
+    category: "Dynamic Memory",
+    question: "Which function is used in C to allocate memory on the heap at runtime?",
+    choices: ["alloc()", "malloc()", "new()", "memalloc()"],
+    answer: 1,
+    explanation: "<code>malloc()</code> is the C library function that allocates a block of memory on the heap and returns a pointer to it."
+  },
+  {
+    category: "Dynamic Memory",
+    question: "Which function is used in C to release (free) heap memory when you're done using it?",
+    choices: ["delete()", "release()", "free()", "clear()"],
+    answer: 2,
+    explanation: "The <code>free()</code> function is used to deallocate memory on the heap that was previously allocated with <code>malloc()</code>."
+  },
+  {
+    category: "Dynamic Memory",
+    question: "What is the equivalent of <code>malloc</code> in C++ for allocating heap memory?",
+    choices: ["alloc", "new operator", "malloc still works", "Both B and C"],
+    answer: 3,
+    explanation: "In C++, both <code>malloc</code> (from C) and the <code>new</code> operator can be used to allocate heap memory. <code>delete</code> corresponds to <code>free</code>."
+  },
+  {
+    category: "Stack vs Heap",
+    question: "What happens to stack memory when a function call finishes?",
+    choices: [
+      "It must be manually freed using free()",
+      "It is automatically reclaimed/deallocated",
+      "It is moved to the heap",
+      "It persists until the program ends"
+    ],
+    answer: 1,
+    explanation: "Stack memory is automatically reclaimed when a function call finishes. The stack frame is deallocated and that memory becomes available again."
+  },
+  {
+    category: "Stack vs Heap",
+    question: "What is a memory leak?",
+    choices: [
+      "When a stack overflows due to too many function calls",
+      "When heap memory that is no longer needed is not freed, causing memory consumption to grow",
+      "When a pointer points to the wrong address",
+      "When the compiler runs out of registers"
+    ],
+    answer: 1,
+    explanation: "A memory leak is the improper use of dynamic (heap) memory where unused and unreferenced memory blocks are not freed, causing the program's memory consumption to keep growing."
+  },
+  {
+    category: "Stack vs Heap",
+    question: "In languages like Java and C#, how is heap garbage handled compared to C/C++?",
+    choices: [
+      "Java/C# require manual free() calls just like C",
+      "Java/C# use a garbage collector that automatically clears unreferenced heap memory",
+      "Java/C# do not use heap memory at all",
+      "Java/C# only use stack memory"
+    ],
+    answer: 1,
+    explanation: "Java and C# have automatic garbage collection — the runtime detects and clears unreferenced heap memory, so programmers don't need to manually free it."
+  },
+  {
+    category: "Memory Architecture",
+    question: "In a typical computer memory architecture, what does each byte of memory have?",
+    choices: [
+      "A type identifier",
+      "A unique memory address",
+      "A pointer to the next byte",
+      "A segment descriptor"
+    ],
+    answer: 1,
+    explanation: "Each byte in computer memory has a unique address. Addresses start from 0 and increase sequentially."
+  },
+  {
+    category: "Pointers & Initialization",
+    question: "What happens if you declare a pointer <code>int *p;</code> and print <code>p</code> without initializing it?",
+    choices: [
+      "It prints 0",
+      "It prints NULL",
+      "The program may crash or produce an error — the pointer is uninitialized",
+      "It automatically points to a new integer"
+    ],
+    answer: 2,
+    explanation: "Using an uninitialized pointer causes undefined behavior — the program may crash. Always initialize pointers before using them."
+  },
+  {
+    category: "Syntax",
+    question: "Which of the following correctly stores the address of variable <code>a</code> in pointer <code>p</code>?",
+    choices: ["p = *a;", "p = a;", "p = &a;", "*p = a;"],
+    answer: 2,
+    explanation: "<code>p = &a;</code> uses the address-of operator <code>&</code> to get the address of <code>a</code> and store it in pointer <code>p</code>."
+  },
+  {
+    category: "Stack vs Heap",
+    question: "What is true about the stack in terms of size?",
+    choices: [
+      "The stack grows dynamically and has no fixed limit",
+      "The stack is fixed in size; too many calls can cause a stack overflow",
+      "The stack size equals the heap size",
+      "The stack is larger than the heap"
+    ],
+    answer: 1,
+    explanation: "The stack is fixed in size. Excessive function calls (e.g., deep recursion) can overflow the stack. The heap, on the other hand, can grow as long as system memory is available."
+  }
+];
+
+let currentQ = 0;
+let score = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let skippedCount = 0;
+let timerInterval = null;
+let timeLeft = 20;
+let answered = false;
+let shuffled = [];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  shuffled = shuffle(questions);
+  currentQ = 0;
+  score = 0;
+  correctCount = 0;
+  wrongCount = 0;
+  skippedCount = 0;
+  showScreen('quiz-screen');
+  loadQuestion();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function loadQuestion() {
+  answered = false;
+  timeLeft = 20;
+
+  const q = shuffled[currentQ];
+  const total = shuffled.length;
+
+  document.getElementById('q-num').textContent = currentQ + 1;
+  document.getElementById('q-total').textContent = total;
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('question-text').innerHTML = q.question;
+  document.getElementById('progress-bar').style.width = ((currentQ / total) * 100) + '%';
+  document.getElementById('feedback-box').className = 'feedback-box';
+  document.getElementById('feedback-box').innerHTML = '';
+  document.getElementById('next-btn').className = 'next-btn';
+
+  const timer = document.getElementById('timer-display');
+  timer.textContent = timeLeft;
+  timer.className = '';
+
+  const grid = document.getElementById('choices-grid');
+  grid.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.choices.forEach((choice, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-letter">${letters[i]}</span><span>${choice}</span>`;
+    btn.onclick = () => selectAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    timer.textContent = timeLeft;
+    if (timeLeft <= 5) timer.className = 'danger';
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      timeOut();
+    }
+  }, 1000);
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const q = shuffled[currentQ];
+  const buttons = document.querySelectorAll('.choice-btn');
+  buttons.forEach(b => b.disabled = true);
+
+  const isCorrect = idx === q.answer;
+
+  buttons[idx].classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) {
+    buttons[q.answer].classList.add('correct');
+    wrongCount++;
+  } else {
+    score += 10;
+    correctCount++;
+  }
+
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback-box visible ' + (isCorrect ? 'correct-fb' : 'wrong-fb');
+  fb.innerHTML = `<span class="feedback-icon">${isCorrect ? '✅' : '❌'}</span> ${isCorrect ? '<strong>Correct!</strong>' : '<strong>Incorrect.</strong>'} ${q.explanation}`;
+
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('next-btn').className = 'next-btn visible';
+}
+
+function timeOut() {
+  if (answered) return;
+  answered = true;
+  skippedCount++;
+
+  const q = shuffled[currentQ];
+  const buttons = document.querySelectorAll('.choice-btn');
+  buttons.forEach(b => b.disabled = true);
+  buttons[q.answer].classList.add('correct');
+
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback-box visible wrong-fb';
+  fb.innerHTML = `<span class="feedback-icon">⏰</span> <strong>Time's up!</strong> The correct answer was: <strong>${q.choices[q.answer]}</strong>. ${q.explanation}`;
+
+  document.getElementById('next-btn').className = 'next-btn visible';
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= shuffled.length) {
+    showResults();
+  } else {
+    loadQuestion();
+  }
+}
+
+function showResults() {
+  clearInterval(timerInterval);
+  showScreen('results-screen');
+
+  const total = shuffled.length;
+  const pct = Math.round((correctCount / total) * 100);
+
+  document.getElementById('final-score').textContent = `${correctCount}/${total}`;
+  document.getElementById('res-correct').textContent = correctCount;
+  document.getElementById('res-wrong').textContent = wrongCount;
+  document.getElementById('res-skipped').textContent = skippedCount;
+
+  let grade, message, trophy;
+  if (pct >= 90) {
+    grade = '🎓 Pointer Master!';
+    message = 'Outstanding! You have an expert-level understanding of pointers, memory, and dynamic allocation in C/C++.';
+    trophy = '🏆';
+  } else if (pct >= 75) {
+    grade = '⭐ Great Job!';
+    message = 'Solid understanding of pointers! Review a few topics and you\'ll be a master in no time.';
+    trophy = '🥇';
+  } else if (pct >= 50) {
+    grade = '📚 Good Effort!';
+    message = 'You\'re getting there! Revisit the sections on pointer arithmetic and memory management.';
+    trophy = '🥈';
+  } else {
+    grade = '💪 Keep Practicing!';
+    message = 'Pointers can be tricky at first. Watch the video again and retake the quiz — you\'ve got this!';
+    trophy = '📖';
+  }
+
+  document.getElementById('trophy-icon').textContent = trophy;
+  document.getElementById('result-grade').textContent = grade;
+  document.getElementById('result-message').textContent = message;
+  document.getElementById('progress-bar').style.width = '100%';
+}
+
+function restartQuiz() {
+  startQuiz();
+}
+</script>
+</body>
+</html>
